@@ -11,21 +11,16 @@ ARG gid=1000
 ARG http_port=8080
 ARG agent_port=50000
 ARG JENKINS_HOME=/var/jenkins_home
-
-ENV JENKINS_HOME $JENKINS_HOME
-ENV JENKINS_SLAVE_AGENT_PORT ${agent_port}
-
-#### Build variables
-ENV ANSIBLE_HOME /home/ansible
-ENV TERRAFORM_VERSION=0.11.10
-
-# Create user
 ARG ansible_user=ansible
 ARG ansible_group=ansible
 ARG ansible_uid=1001
 ARG ansible_gid=1001
 
-## Install via apt
+ENV JENKINS_HOME $JENKINS_HOME
+ENV JENKINS_SLAVE_AGENT_PORT ${agent_port}
+ENV ANSIBLE_HOME /home/ansible
+ENV TERRAFORM_VERSION=0.11.10
+
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
         apt-utils \
@@ -40,22 +35,17 @@ RUN apt-get update && \
         sudo uuid-dev unzip wget && \
     apt-get clean
 
-# Install Ansible and dependencies (via pip) forcing the deps to latest
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install ansible kerberos pywinrm  requests_kerberos xmltodict
 
 RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin
 
-## Other
 RUN groupadd -g ${ansible_gid} ${ansible_group} \
     && useradd -d "$ANSIBLE_HOME" -u ${ansible_uid} -g ${ansible_gid} -m -s /bin/bash ${ansible_user} \
-    # Add jenkins and ansible to sudoers with no password
     && echo "jenkins        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/jenkins \
     && echo "ansible        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/ansible
 
-# ADD [external_file] [/local_dir/external_file]
-# Ansible configuration
 COPY ansible.cfg /etc/ansible/.
 
 # Jenkins is run with user `jenkins`, uid = 1000
@@ -66,8 +56,6 @@ RUN mkdir -p $JENKINS_HOME \
   && groupadd -g ${gid} ${group} \
   && useradd -d "$JENKINS_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 
-# Jenkins home directory is a volume, so configuration and build history
-# can be persisted and survive image upgrades
 VOLUME $JENKINS_HOME
 
 # `/usr/share/jenkins/ref/` contains all reference configuration we want
