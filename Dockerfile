@@ -29,6 +29,7 @@ RUN apt-get update && \
         debconf-utils \
         file \
         git \
+        apache2-utils \
         libffi-dev libxslt1-dev libssl-dev libxml2-dev libkrb5-dev \
         openssl \
         python python-dev python-pip python-setuptools \
@@ -36,7 +37,7 @@ RUN apt-get update && \
     apt-get clean
 
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install ansible kerberos pywinrm  requests_kerberos xmltodict
+RUN pip install 'ansible==2.6.5' passlib jmespath kerberos pywinrm  requests_kerberos xmltodict
 
 RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin
@@ -76,11 +77,11 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}
 COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
 # jenkins version being bundled in this docker image
-ARG JENKINS_VERSION=2.160
+ARG JENKINS_VERSION=2.161
 ENV JENKINS_VERSION $JENKINS_VERSION
 
 # jenkins.war checksum, download will be validated using it
-ARG JENKINS_SHA=5418affb3f5046e2b7f7c08a116a1775e233669cb4bf0196ce7045d4c9f6dce6
+ARG JENKINS_SHA=e026221efcec9528498019b6c1581cca70fe9c3f6b10303777d85c6699bca0e4
 
 # Can be used to customize where jenkins.war get downloaded from
 ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-war/${JENKINS_VERSION}/jenkins-war-${JENKINS_VERSION}.war
