@@ -42,6 +42,14 @@ RUN pip install 'ansible==2.6.5' passlib jmespath kerberos pywinrm  requests_ker
 RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin
 
+RUN curl -O https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl && \
+    chmod +x kubectl && \
+    mv kubectl /usr/bin/kubectl
+
+RUN curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/aws-iam-authenticator && \
+    chmod +x ./aws-iam-authenticator && \
+    mv aws-iam-authenticator /usr/bin/aws-iam-authenticator
+
 RUN groupadd -g ${ansible_gid} ${ansible_group} \
     && useradd -d "$ANSIBLE_HOME" -u ${ansible_uid} -g ${ansible_gid} -m -s /bin/bash ${ansible_user} \
     && echo "jenkins        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/jenkins \
@@ -77,11 +85,11 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}
 COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
 # jenkins version being bundled in this docker image
-ARG JENKINS_VERSION=2.166
+ARG JENKINS_VERSION=2.168
 ENV JENKINS_VERSION $JENKINS_VERSION
 
 # jenkins.war checksum, download will be validated using it
-ARG JENKINS_SHA=3055e892a951f7084d40027bb31e095b79a0939029b95a1f4d498bbb03c43193
+ARG JENKINS_SHA=83756847b09e754829aaf343d2f11a8c84b097e922d1770dc53b8c8267184e62
 
 # Can be used to customize where jenkins.war get downloaded from
 ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-war/${JENKINS_VERSION}/jenkins-war-${JENKINS_VERSION}.war
