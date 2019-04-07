@@ -24,7 +24,9 @@ ENV TERRAFORM_VERSION=0.11.10
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
         apt-utils \
+        bash-completion \
         build-essential \
+        vim \
         ca-certificates curl \
         debconf-utils \
         file \
@@ -35,6 +37,8 @@ RUN apt-get update && \
         python python-dev python-pip python-setuptools \
         sudo uuid-dev unzip wget && \
     apt-get clean
+
+COPY bash_profile /var/jenkins_home/.bash_profile
 
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install 'ansible==2.6.5' passlib jmespath kerberos pywinrm  requests_kerberos xmltodict
@@ -49,6 +53,12 @@ RUN curl -O https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bi
 RUN curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/aws-iam-authenticator && \
     chmod +x ./aws-iam-authenticator && \
     mv aws-iam-authenticator /usr/bin/aws-iam-authenticator
+
+RUN wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
+    tar -xzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
+    chmod +x openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc && \
+    mv openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc /usr/bin/ && \
+    /usr/bin/oc completion bash > /etc/bash_completion.d/oc
 
 RUN groupadd -g ${ansible_gid} ${ansible_group} \
     && useradd -d "$ANSIBLE_HOME" -u ${ansible_uid} -g ${ansible_gid} -m -s /bin/bash ${ansible_user} \
