@@ -54,6 +54,10 @@ RUN curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/
     chmod +x ./aws-iam-authenticator && \
     mv aws-iam-authenticator /usr/bin/aws-iam-authenticator
 
+RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz && \
+    tar -zxvf helm-v2.13.1-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/bin/helm
+
 RUN wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
     tar -xzf openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
     chmod +x openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit/oc && \
@@ -95,11 +99,11 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}
 COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
 # jenkins version being bundled in this docker image
-ARG JENKINS_VERSION=2.173
+ARG JENKINS_VERSION=2.174
 ENV JENKINS_VERSION $JENKINS_VERSION
 
 # jenkins.war checksum, download will be validated using it
-ARG JENKINS_SHA=f0802029595e660cd82f7967ec4235f17cbe5e71fc384885c0b4107a998db94a
+ARG JENKINS_SHA=32a949012fd7a5501fabe7dcc55bd5e2cd8b77100a992387262aa7f4515f5761
 
 # Can be used to customize where jenkins.war get downloaded from
 ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-war/${JENKINS_VERSION}/jenkins-war-${JENKINS_VERSION}.war
