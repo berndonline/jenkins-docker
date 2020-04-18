@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk
+FROM openjdk:11-jdk-stretch
 
 USER root
 
@@ -101,11 +101,11 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}
 COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
 # jenkins version being bundled in this docker image
-ARG JENKINS_VERSION=2.180
+ARG JENKINS_VERSION=2.186
 ENV JENKINS_VERSION $JENKINS_VERSION
 
 # jenkins.war checksum, download will be validated using it
-ARG JENKINS_SHA=72ddb57dc6a7e7174d89c8ea5e9dd5aa7fbf31304f44101acd238734bcc12da8
+ARG JENKINS_SHA=d98ab2f00a04b193332704e75394b930683f1d7bb748c4ba3a0a2cad234f84ad
 
 # Can be used to customize where jenkins.war get downloaded from
 ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-war/${JENKINS_VERSION}/jenkins-war-${JENKINS_VERSION}.war
