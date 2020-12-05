@@ -19,7 +19,7 @@ ARG ansible_gid=1001
 ENV JENKINS_HOME $JENKINS_HOME
 ENV JENKINS_SLAVE_AGENT_PORT ${agent_port}
 ENV ANSIBLE_HOME /home/ansible
-ENV TERRAFORM_VERSION=0.11.10
+ENV TERRAFORM_VERSION=0.14.0
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
@@ -41,23 +41,23 @@ RUN apt-get update && \
 COPY bash_profile /var/jenkins_home/.bash_profile
 
 RUN pip install --upgrade pip setuptools wheel
-RUN pip install 'ansible==2.6.5' passlib jmespath kerberos pywinrm  requests_kerberos xmltodict
+RUN pip install 'ansible==2.10.4' passlib jmespath kerberos pywinrm  requests_kerberos xmltodict
 
 RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin
 
-RUN curl -O https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl && \
+RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x kubectl && \
     mv kubectl /usr/bin/kubectl
 
-RUN curl -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/aws-iam-authenticator && \
+RUN curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/linux/amd64/aws-iam-authenticator && \
     chmod +x ./aws-iam-authenticator && \
     mv aws-iam-authenticator /usr/bin/aws-iam-authenticator
 
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-sdk -y
 
-RUN wget https://storage.googleapis.com/kubernetes-helm/helm-v2.13.1-linux-amd64.tar.gz && \
-    tar -zxvf helm-v2.13.1-linux-amd64.tar.gz && \
+RUN wget https://get.helm.sh/helm-v3.4.0-linux-amd64.tar.gz && \
+    tar -zxvf helm-v3.4.0-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/bin/helm
 
 RUN wget https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz && \
@@ -101,11 +101,11 @@ RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}
 COPY init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-agent-port.groovy
 
 # jenkins version being bundled in this docker image
-ARG JENKINS_VERSION=2.186
+ARG JENKINS_VERSION=2.269
 ENV JENKINS_VERSION $JENKINS_VERSION
 
 # jenkins.war checksum, download will be validated using it
-ARG JENKINS_SHA=d98ab2f00a04b193332704e75394b930683f1d7bb748c4ba3a0a2cad234f84ad
+ARG JENKINS_SHA=3c8c584e12e50475d4312f3721bc876d005344ef072e6f1356fbed47e64ef93c
 
 # Can be used to customize where jenkins.war get downloaded from
 ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-war/${JENKINS_VERSION}/jenkins-war-${JENKINS_VERSION}.war
