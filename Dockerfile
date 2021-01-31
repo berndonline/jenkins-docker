@@ -1,4 +1,4 @@
-FROM adoptopenjdk/openjdk11:jdk-11.0.10_9-debian
+FROM adoptopenjdk:11-jdk-openj9-bionic
 
 USER root
 
