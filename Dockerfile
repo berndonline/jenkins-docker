@@ -34,7 +34,7 @@ RUN apt-get update && \
         apache2-utils \
         libffi-dev libxslt1-dev libssl-dev libxml2-dev libkrb5-dev \
         openssl \
-        python3.9 python3-dev python3-pip python3-setuptools \
+        python3 python3-dev python3-pip python3-setuptools \
         sudo uuid-dev unzip wget && \
     apt-get clean
 
