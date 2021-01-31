@@ -1,4 +1,4 @@
-FROM openjdk:11-jdk-stretch
+FROM adoptopenjdk/openjdk11:jdk-11.0.10_9-debian
 
 USER root
 
