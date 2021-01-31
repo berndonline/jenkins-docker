@@ -31,6 +31,7 @@ RUN apt-get update && \
         debconf-utils \
         file \
         git \
+        gnupg \
         apache2-utils \
         libffi-dev libxslt1-dev libssl-dev libxml2-dev libkrb5-dev \
         openssl \
