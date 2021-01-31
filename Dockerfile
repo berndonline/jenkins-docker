@@ -39,6 +39,8 @@ RUN apt-get update && \
         sudo uuid-dev unzip wget && \
     apt-get clean
 
+RUN which java
+
 COPY bash_profile /var/jenkins_home/.bash_profile
 
 RUN pip3 install --upgrade pip setuptools wheel
