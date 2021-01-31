@@ -34,14 +34,14 @@ RUN apt-get update && \
         apache2-utils \
         libffi-dev libxslt1-dev libssl-dev libxml2-dev libkrb5-dev \
         openssl \
-        python python-dev python-pip python-setuptools \
+        python3 python3-dev python3-pip python3-setuptools \
         sudo uuid-dev unzip wget && \
     apt-get clean
 
 COPY bash_profile /var/jenkins_home/.bash_profile
 
-RUN pip install --upgrade pip setuptools wheel
-RUN pip install 'ansible==2.10.4' passlib jmespath kerberos pywinrm  requests_kerberos xmltodict
+RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 install 'ansible==2.10.4' passlib jmespath kerberos pywinrm  requests_kerberos xmltodict
 
 RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin
