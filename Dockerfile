@@ -31,21 +31,29 @@ RUN apt-get update && \
 
 COPY bash_profile /var/jenkins_home/.bash_profile
 
-# Terraform
-RUN wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+# Terraform (with checksum verification)
+RUN wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS && \
+    grep "terraform_${TERRAFORM_VERSION}_linux_amd64.zip" terraform_${TERRAFORM_VERSION}_SHA256SUMS > terraform_SHA256SUMS_linux_amd64 && \
+    wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    sha256sum -c terraform_SHA256SUMS_linux_amd64 && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/bin && \
-    rm -f terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+    rm -f terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform_${TERRAFORM_VERSION}_SHA256SUMS terraform_SHA256SUMS_linux_amd64
 
-# kubectl
-RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
-    chmod +x /usr/bin/kubectl
+# kubectl (with checksum verification)
+RUN KUBECTL_VER=$(curl -fsSL https://dl.k8s.io/release/stable.txt) && \
+    curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl" && \
+    curl -fsSL -o /tmp/kubectl.sha256 "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl.sha256" && \
+    echo "$(cat /tmp/kubectl.sha256)  /usr/bin/kubectl" | sha256sum -c - && \
+    chmod +x /usr/bin/kubectl && rm -f /tmp/kubectl.sha256
 
-# Helm
+# Helm (with checksum verification)
 RUN wget -q https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
+    wget -q https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum && \
+    sha256sum -c helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum && \
     tar -zxf helm-${HELM_VERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \
-    rm -rf linux-amd64 helm-${HELM_VERSION}-linux-amd64.tar.gz
+    rm -rf linux-amd64 helm-${HELM_VERSION}-linux-amd64.tar.gz helm-${HELM_VERSION}-linux-amd64.tar.gz.sha256sum
 
 # Jenkins user/group (idempotent)
 RUN mkdir -p "${JENKINS_HOME}" && \
@@ -87,13 +95,12 @@ ENV COPY_REFERENCE_FILE_LOG=${JENKINS_HOME}/copy_reference_file.log
 
 COPY jenkins-support /usr/local/bin/jenkins-support
 COPY jenkins.sh /usr/local/bin/jenkins.sh
-COPY tini-shim.sh /bin/tini
-COPY plugins.sh /usr/local/bin/plugins.sh
+# Removed unused tini shim; using verified /sbin/tini only
 COPY install-plugins.sh /usr/local/bin/install-plugins.sh
 
 RUN chown -R ${user} /usr/local/bin/jenkins.sh && \
-    chmod +x /usr/local/bin/jenkins.sh /usr/local/bin/jenkins-support /bin/tini \
-             /usr/local/bin/plugins.sh /usr/local/bin/install-plugins.sh
+    chmod +x /usr/local/bin/jenkins.sh /usr/local/bin/jenkins-support \
+             /usr/local/bin/install-plugins.sh
 
 USER ${user}
 
