@@ -2,8 +2,6 @@ FROM eclipse-temurin:21-jdk
 
 USER root
 
-RUN apt-get update && apt-get install -y git curl && rm -rf /var/lib/apt/lists/*
-
 ARG user=jenkins
 ARG group=jenkins
 ARG uid=10000
@@ -12,6 +10,7 @@ ARG http_port=8080
 ARG agent_port=50000
 ARG JENKINS_HOME=/var/jenkins_home
 ARG TINI_VERSION=v0.19.0
+ARG HELM_VERSION=v3.9.0
 ARG JENKINS_VERSION=2.526
 ARG JENKINS_SHA=e1bd436678abb631d5d30c719240c2753369eeb925ade3a35faf5dfbdecb27b0
 ARG JENKINS_URL=https://repo.jenkins-ci.org/public/org/jenkins-ci/main/jenkins-war/${JENKINS_VERSION}/jenkins-war-${JENKINS_VERSION}.war
@@ -38,15 +37,15 @@ RUN wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraf
     rm -f terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 # kubectl
-RUN curl -sSL -o /usr/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
+RUN curl -fsSL -o /usr/bin/kubectl "https://dl.k8s.io/release/$(curl -fsSL https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x /usr/bin/kubectl
 
 # Helm
-RUN wget -q https://get.helm.sh/helm-v3.9.0-linux-amd64.tar.gz && \
-    tar -zxf helm-v3.9.0-linux-amd64.tar.gz && \
+RUN wget -q https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz && \
+    tar -zxf helm-${HELM_VERSION}-linux-amd64.tar.gz && \
     mv linux-amd64/helm /usr/bin/helm && \
     chmod +x /usr/bin/helm && \
-    rm -rf linux-amd64 helm-v3.9.0-linux-amd64.tar.gz
+    rm -rf linux-amd64 helm-${HELM_VERSION}-linux-amd64.tar.gz
 
 # Jenkins user/group (idempotent)
 RUN mkdir -p "${JENKINS_HOME}" && \
@@ -64,7 +63,7 @@ COPY tini_pub.gpg ${JENKINS_HOME}/tini_pub.gpg
 RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture) -o /sbin/tini && \
     curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-static-$(dpkg --print-architecture).asc -o /sbin/tini.asc && \
     gpg --no-tty --import ${JENKINS_HOME}/tini_pub.gpg && \
-    gpg --verify /sbin/tini.asc && \
+    gpg --verify /sbin/tini.asc /sbin/tini && \
     rm -rf /sbin/tini.asc /root/.gnupg && \
     chmod +x /sbin/tini
 
@@ -89,14 +88,17 @@ ENV COPY_REFERENCE_FILE_LOG=${JENKINS_HOME}/copy_reference_file.log
 COPY jenkins-support /usr/local/bin/jenkins-support
 COPY jenkins.sh /usr/local/bin/jenkins.sh
 COPY tini-shim.sh /bin/tini
+COPY plugins.sh /usr/local/bin/plugins.sh
+COPY install-plugins.sh /usr/local/bin/install-plugins.sh
 
 RUN chown -R ${user} /usr/local/bin/jenkins.sh && \
-    chmod +x /usr/local/bin/jenkins.sh
+    chmod +x /usr/local/bin/jenkins.sh /usr/local/bin/jenkins-support /bin/tini \
+             /usr/local/bin/plugins.sh /usr/local/bin/install-plugins.sh
 
 USER ${user}
 
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/jenkins.sh"]
 
-# Plugins helpers
-COPY plugins.sh /usr/local/bin/plugins.sh
-COPY install-plugins.sh /usr/local/bin/install-plugins.sh
+# Basic healthcheck to ensure Jenkins is responsive
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
+  CMD curl -fsS http://localhost:${http_port}/login > /dev/null || exit 1
